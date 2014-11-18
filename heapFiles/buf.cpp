@@ -167,7 +167,7 @@ const Status BufMgr::readPage(File* file, const int PageNo, Page*& page)
     return OK;
 }
 
-
+// In: file, PageNo, dirty
 const Status BufMgr::unPinPage(File* file, const int PageNo, 
 			       const bool dirty) 
 {
@@ -176,11 +176,6 @@ const Status BufMgr::unPinPage(File* file, const int PageNo,
     int frameNo = 0;
     status = hashTable->lookup(file, PageNo, frameNo);
     if (status != OK) return status;
-    /*
-    if (status != OK) {cout << "lookup failed in unpinpage\n"; return status;}
-    cout << "unpinning (file.page) " << file << "." << PageNo << " with dirty flag = " << dirty << endl;
-    cout << "\t page is in frame " << frameNo << " pinCnt is " << bufTable[frameNo].pinCnt  << endl;
-    */
 
     if (dirty == true) bufTable[frameNo].dirty = dirty;
 
@@ -249,7 +244,7 @@ const Status BufMgr::disposePage(File* file, const int pageNo)
     return file->disposePage(pageNo);
 }
 
-
+// In: file, InOut: N/A, Out: pageNo, page
 const Status BufMgr::allocPage(File* file, int& pageNo, Page*& page) 
 {
     int frameNo;
@@ -266,10 +261,10 @@ const Status BufMgr::allocPage(File* file, int& pageNo, Page*& page)
      bufTable[frameNo].Set(file, pageNo);
      page = &bufPool[frameNo];
 
-     // insert in thehash table
+     // insert in the  hash table
      status = hashTable->insert(file, pageNo, frameNo);
      if (status != OK) { return status; }
-     // cout << "allocated page " << pageNo <<  " to file " << file << "frame is: " << frameNo  << endl;
+     
     return OK;
 }
 

@@ -16,23 +16,24 @@ const Status createHeapFile(const string fileName)
     
     if (status != OK)
     {
-	// file doesn't exist. First create it and allocate
-	// an empty header page and data page.
-	db.createFile(fileName);
+	db.createFile(fileName); // Create the file
 	db.openFile(fileName, file); // Returns the file pointer in the file parameter
-	bufMgr->allocPage(file, 
-		
 	
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+	bufMgr->allocPage(file, hdrPageNo, newPage); // Allocate the header page
+	hdrPage = (FileHdrPage*)&newPage; // Cast to a FileHdrPage type
+	
+	bufMgr->allocPage(file, newPageNo, newPage); // Allocate a new page
+	newPage->init(newPageNo); // Set up a new empty page	
+	
+	// Initialize values of header page
+	hdrPage->fileName = fileName;
+	hdrPage->firstPage = newPageNo;
+	hdrPage->lastPage = newPageNo;
+	hdrPage->pageCnt = 1; // Technically newPage exists
+	hdrPage->recCnt = 0; // But there aren't any records on it yet
+	
+	bufMgr->unPinPage(file, hdrPageNo, true) // UnPin and mark dirty
+	bufMgr->unPinPage(file, newPageNo, true) // UnPin and mark dirty		
     }
     return (FILEEXISTS);
 }
