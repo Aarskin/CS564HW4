@@ -130,6 +130,7 @@ const Status BufMgr::allocBuf(int & frame)
 } // end allocBuf
 
 	
+// In: file, PageNo | Out: page
 const Status BufMgr::readPage(File* file, const int PageNo, Page*& page)
 {
     // check to see if it is already in the buffer pool

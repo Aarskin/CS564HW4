@@ -26,14 +26,15 @@ const Status createHeapFile(const string fileName)
 	newPage->init(newPageNo); // Set up a new empty page	
 	
 	// Initialize values of header page
-	hdrPage->fileName = fileName;
+	strncpy(hdrPage->fileName, fileName.c_str(), sizeof(hdrPage->fileName)); // Copy string into char[], limited to MAXNAMESIZE
+	hdrPage->fileName[sizeof(hdrPage->fileName)-1] = 0; // For safety! (http://www.cplusplus.com/reference/cstring/strncpy/)
 	hdrPage->firstPage = newPageNo;
 	hdrPage->lastPage = newPageNo;
 	hdrPage->pageCnt = 1; // Technically newPage exists
 	hdrPage->recCnt = 0; // But there aren't any records on it yet
 	
-	bufMgr->unPinPage(file, hdrPageNo, true) // UnPin and mark dirty
-	bufMgr->unPinPage(file, newPageNo, true) // UnPin and mark dirty		
+	bufMgr->unPinPage(file, hdrPageNo, true); // UnPin and mark dirty
+	bufMgr->unPinPage(file, newPageNo, true);	 // UnPin and mark dirty		
     }
     return (FILEEXISTS);
 }
@@ -219,7 +220,7 @@ const Status HeapFileScan::resetScan()
     return OK;
 }
 
-
+// Out: outRid
 const Status HeapFileScan::scanNext(RID& outRid)
 {
     Status 	status = OK;
@@ -228,7 +229,7 @@ const Status HeapFileScan::scanNext(RID& outRid)
     int 	nextPageNo;
     Record      rec;
 
-    
+    status = bufMgr->readPage(filePtr, curPageNo, curPage);
 	
 	
 	
