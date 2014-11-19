@@ -228,17 +228,45 @@ const Status HeapFileScan::scanNext(RID& outRid)
     RID		tmpRid;
     int 	nextPageNo;
     Record      rec;
-
-    status = bufMgr->readPage(filePtr, curPageNo, curPage);
-	
-	
-	
-	
-	
-	
-	
-	
-	
+    
+    // There will always be curPage to loop over, this ensures do/while will
+    // run at least once before terminating. (As I understand it)
+    nextPageNo = curPageNo; 
+    
+    do // Loop over pages
+    {
+    	if(nextPageNo = -1) // Indicates that there was no next page
+    	    return FILEEOF; // No more predicate matches in this file
+    	    		
+    	status = bufMgr->readPage(filePtr, nextPageNo, curPage); // Read curPage into the buffer pool
+    	if(status != OK) return status; // Only continue if nothing's gone wrong
+    	
+    	do // Loop over records on page
+    	{
+    	    if(curRec->pageNo = -1 and curRec->slotNo = -1) // We haven't scanned anything on this page yet
+	    
+	        status = curPage->firstRecord(curRec); // Put the first RID of the page in curRec
+	        if(status = NORECORDS) break; // Break out of the loop for this page
+	    }
+	    else
+	    { 
+	        // First parameter is the ID most recently checked, second stores the ID 
+	        // that needs to be checked this pass of the loop (returned by nextRecord)  
+	        status = curPage->nextRecord(curRec, curRec);
+	        if(status = ENDOFPAGE) break; // Break out of the loop for this page
+	    }	
+    	
+	    status = curPage->getRecord(curRec, rec); // Pulls the actual record data into rec
+    	    if(status != OK) return status; // Only continue if nothing's gone wrong
+    	
+	    if(matchRec(rec)) // Check if the Record matches the predicate filter
+	    {
+	        return curRec;
+	    }
+	}
+	while(true) // Page-end checking happens after the firstRecord/nextRecord call
+    	
+    } while (curPage->getNextPage(nextPageNo) = OK) // Continue looping until there are no more pages
 }
 
 
