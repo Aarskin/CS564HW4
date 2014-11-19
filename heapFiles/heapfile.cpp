@@ -243,8 +243,8 @@ const Status HeapFileScan::scanNext(RID& outRid)
     	
     	do // Loop over records on page
     	{
-    	    if(curRec->pageNo = -1 and curRec->slotNo = -1) // We haven't scanned anything on this page yet
-	    
+    	    if(curRec.pageNo == -1 and curRec.slotNo == -1) // We haven't scanned anything on this page yet
+	    {
 	        status = curPage->firstRecord(curRec); // Put the first RID of the page in curRec
 	        if(status = NORECORDS) break; // Break out of the loop for this page
 	    }
@@ -261,12 +261,13 @@ const Status HeapFileScan::scanNext(RID& outRid)
     	
 	    if(matchRec(rec)) // Check if the Record matches the predicate filter
 	    {
-	        return curRec;
+	    	outRid = curRec;
+	        return OK;
 	    }
 	}
-	while(true) // Page-end checking happens after the firstRecord/nextRecord call
+	while(true); // Page-end checking happens after the firstRecord/nextRecord call
     	
-    } while (curPage->getNextPage(nextPageNo) = OK) // Continue looping until there are no more pages
+    } while (curPage->getNextPage(nextPageNo) == OK); // Continue looping until there are no more pages
 }
 
 
@@ -390,7 +391,7 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
         return INVALIDRECLEN;
     }
 
-  
+     
   
   
   
