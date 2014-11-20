@@ -391,18 +391,53 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
         return INVALIDRECLEN;
     }
 
-     
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+    // Ensure that we deal with the last page of the file
+    if(curPageNo != headerPage->lastPage) // Not currently on the last page
+    {
+    	status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag); // Release the current page
+    	if (status != OK) return status;
+    	
+    	status = bufMgr->readPage(filePtr, headerPage->lastPage, newPage); // Read in last page
+    	if (status != OK) return status;
+    	
+    	// Set curPage to the last page in the file
+    	curPage = newPage;
+    	curPageNo = headerPage->lastPage;
+    	curDirtyFlag = false; // Just read it in
+    }
+    
+    // At this point curPage should always be the last page of the file    
+
+    status = curPage->insertRecord(rec, rid) // Try to insert on this page
+
+    if (status == NOSPACE) // The page was full
+    {
+        status = filePtr->allocatePage(newPageNo); // Make new page
+        if (status != OK) return status; // Bail, db layer broked
+        
+        // Unpin and Pin pages appropriately
+        status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag); // No longer need the current curPage
+        if (status != OK) return status; // Bail
+        status = bufMrg->readPage(filePtr, newPageNo, newPage); // Sets pinCnt to 1, pointer in newPage
+        if (status != OK) return status; // Bail
+        
+        // Update curPage info
+        curPage = newPage; // Pointer
+        curPageNo = newPageNo; // PageNo
+        curDirtyFlag = false; // Haven't written yet
+       
+        status = curPage->insertRecord(rec, rid); // Should work now
+        if (status != OK) return status; // But just in case
+        
+        curDirtyFlag = true; // New record in the page!
+    
+        // Update the FileHdrPage
+        headerPage->lastPage = newPageNo;
+        headerPage->pageCnt++;
+        headerPage->recCnt++;    	    
+    }
+
+    return OK; // Success!
 }
 
 

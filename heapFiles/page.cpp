@@ -60,6 +60,7 @@ const Status Page::insertRecord(const Record & rec, RID& rid)
     // This is an upper bound check. may not actually need a slot
     // if we can find an empty one
     if (spaceNeeded > freeSpace) return NOSPACE;
+    
     else
     {
         int i=0;
