@@ -224,8 +224,7 @@ const Status HeapFileScan::resetScan()
 const Status HeapFileScan::scanNext(RID& outRid)
 {
     Status 	status = OK;
-    RID		nextRid;
-    RID		tmpRid;
+    //RID		nextRid, tmpRid; (necessary?)
     int 	nextPageNo;
     Record      rec;
     
@@ -235,7 +234,7 @@ const Status HeapFileScan::scanNext(RID& outRid)
     
     do // Loop over pages
     {
-    	if(nextPageNo = -1) // Indicates that there was no next page
+    	if(nextPageNo == -1) // Indicates that there was no next page
     	    return FILEEOF; // No more predicate matches in this file
     	    		
     	status = bufMgr->readPage(filePtr, nextPageNo, curPage); // Read curPage into the buffer pool
@@ -246,14 +245,14 @@ const Status HeapFileScan::scanNext(RID& outRid)
     	    if(curRec.pageNo == -1 and curRec.slotNo == -1) // We haven't scanned anything on this page yet
 	    {
 	        status = curPage->firstRecord(curRec); // Put the first RID of the page in curRec
-	        if(status = NORECORDS) break; // Break out of the loop for this page
+	        if(status == NORECORDS) break; // Break out of the loop for this page
 	    }
 	    else
 	    { 
 	        // First parameter is the ID most recently checked, second stores the ID 
 	        // that needs to be checked this pass of the loop (returned by nextRecord)  
 	        status = curPage->nextRecord(curRec, curRec);
-	        if(status = ENDOFPAGE) break; // Break out of the loop for this page
+	        if(status == ENDOFPAGE) break; // Break out of the loop for this page
 	    }	
     	
 	    status = curPage->getRecord(curRec, rec); // Pulls the actual record data into rec
@@ -268,6 +267,9 @@ const Status HeapFileScan::scanNext(RID& outRid)
 	while(true); // Page-end checking happens after the firstRecord/nextRecord call
     	
     } while (curPage->getNextPage(nextPageNo) == OK); // Continue looping until there are no more pages
+    
+    return FILEEOF; // Should never actually reach this point
+    // The designed point to break out of this method is the check at the top of the first do/while loop
 }
 
 
@@ -381,7 +383,7 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
 {
     Page*	newPage;
     int		newPageNo;
-    Status	status, unpinstatus;
+    Status	status;
     RID		rid;
 
     // check for very large records
@@ -408,7 +410,7 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
     
     // At this point curPage should always be the last page of the file    
 
-    status = curPage->insertRecord(rec, rid) // Try to insert on this page
+    status = curPage->insertRecord(rec, rid); // Try to insert on this page
 
     if (status == NOSPACE) // The page was full
     {
@@ -418,7 +420,7 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
         // Unpin and Pin pages appropriately
         status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag); // No longer need the current curPage
         if (status != OK) return status; // Bail
-        status = bufMrg->readPage(filePtr, newPageNo, newPage); // Sets pinCnt to 1, pointer in newPage
+        status = bufMgr->readPage(filePtr, newPageNo, newPage); // Sets pinCnt to 1, pointer in newPage
         if (status != OK) return status; // Bail
         
         // Update curPage info
