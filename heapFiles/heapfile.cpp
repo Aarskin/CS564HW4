@@ -51,17 +51,26 @@ HeapFile::HeapFile(const string & fileName, Status& returnStatus)
     // open the file and read in the header page and the first data page
     if ((status = db.openFile(fileName, filePtr)) == OK)
     {
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+	// Gets page number of header page
+	returnStatus = filePtr->getFirstPage(headerPageNo);
+	if (returnStatus != OK) return;
+
+	// Reads header page
+	returnStatus = bufMgr->readPage(filePtr, headerPageNo, pagePtr);
+	if (returnStatus != OK) return;
+
+	// Initialize protected data members
+	headerPage   = (FileHdrPage*) pagePtr;
+	hdrDirtyFlag = false;
+
+	// Read first data page
+	curPageNo    = headerPage->firstPage;
+	returnStatus = bufMgr->readPage(filePtr, curPageNo, curPage);
+	if (returnStatus != OK) return;
+
+	// Finish Initializing protected data members
+	curDirtyFlag = false;
+	curRec       = NULLRID;
     }
     else
     {
