@@ -136,7 +136,7 @@ const Status HeapFile::getRecord(const RID &  rid, Record & rec)
 	// If record is not on the currently pinned page
 	if (rid.pageNo != curPageNo) {
 		// Unpin current page
-		status = unPinPage(filePtr, curPageNo, curDirtyFlag);
+		status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
 		if (status != OK) return status;
 		
 		// Cleanup curPage vars
@@ -144,7 +144,7 @@ const Status HeapFile::getRecord(const RID &  rid, Record & rec)
 
 		// Read the required page
 		status = bufMgr->readPage(filePtr, rid.pageNo, curPage);
-		if (status != OK) returns status;
+		if (status != OK) return status;
 
 		// Pin the reqired page
 		curPageNo = rid.pageNo;
