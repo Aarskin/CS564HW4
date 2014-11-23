@@ -14,7 +14,7 @@ const Status createHeapFile(const string fileName)
     // try to open the file. This should return an error
     status = db.openFile(fileName, file);
     
-    if (status != OK)
+    if (status != OK) // Need to create the file
     {
 	db.createFile(fileName); // Create the file
 	db.openFile(fileName, file); // Returns the file pointer in the file parameter
