@@ -16,18 +16,27 @@ const Status createHeapFile(const string fileName)
     
     if (status != OK) // Need to create the file
     {
-	db.createFile(fileName); // Create the file
-	db.openFile(fileName, file); // Returns the file pointer in the file parameter
+	status = db.createFile(fileName); // Create the file
+	if (status != OK) return status;
 	
-	bufMgr->allocPage(file, hdrPageNo, newPage); // Allocate the header page
+	status = db.openFile(fileName, file); // Returns the file pointer in the file parameter
+	if (status != OK) return status;
+	
+	status = bufMgr->allocPage(file, hdrPageNo, newPage); // Allocate the header page
+	if(status != OK) return status;
+	
 	hdrPage = (FileHdrPage*)&newPage; // Cast to a FileHdrPage type
 	
 	bufMgr->allocPage(file, newPageNo, newPage); // Allocate a new page
 	newPage->init(newPageNo); // Set up a new empty page	
 	
 	// Initialize values of header page
-	strncpy(hdrPage->fileName, fileName.c_str(), sizeof(hdrPage->fileName)); // Copy string into char[], limited to MAXNAMESIZE
+	//char charsFromString[MAXNAMESIZE];
+	strcpy(hdrPage->fileName, fileName.c_str()); // Copy string into char[], limited to MAXNAMESIZE
 	hdrPage->fileName[sizeof(hdrPage->fileName)-1] = 0; // For safety! (http://www.cplusplus.com/reference/cstring/strncpy/)
+	
+	//Initialize values of header page
+	//hdrPage->fileName = charsFromString;
 	hdrPage->firstPage = newPageNo;
 	hdrPage->lastPage = newPageNo;
 	hdrPage->pageCnt = 1; // Technically newPage exists
