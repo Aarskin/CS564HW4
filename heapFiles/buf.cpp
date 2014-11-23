@@ -162,7 +162,6 @@ const Status BufMgr::readPage(File* file, const int PageNo, Page*& page)
         // insert in the hash table
         status = hashTable->insert(file, PageNo, frameNo);
         if (status != OK) { return status; }
-
     }
 
     return OK;
