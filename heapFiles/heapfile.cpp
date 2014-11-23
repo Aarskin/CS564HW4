@@ -421,7 +421,6 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
     Page*	newPage;
     int		newPageNo;
     Status	status;
-    RID		rid;
 
     // check for very large records
     if ((unsigned int) rec.length > PAGESIZE-DPFIXED)
@@ -447,17 +446,18 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
     
     // At this point curPage should always be the last page of the file    
 
-    status = curPage->insertRecord(rec, rid); // Try to insert on this page
+    status = curPage->insertRecord(rec, outRid); // Try to insert on this page
 
     if (status == NOSPACE) // The page was full
     {
-        status = filePtr->allocatePage(newPageNo); // Make new page
-        if (status != OK) return status; // Bail, db layer broked
+        status = bufMgr->allocPage(filePtr, newPageNo, newPage); // Make new page
+        if (status != OK) return status; // Bail, db layer broked        
+        newPage->init(newPageNo); // Initialize the page
+        
+        curPage->setNextPage(newPageNo);
         
         // Unpin and Pin pages appropriately
         status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag); // No longer need the current curPage
-        if (status != OK) return status; // Bail
-        status = bufMgr->readPage(filePtr, newPageNo, newPage); // Sets pinCnt to 1, pointer in newPage
         if (status != OK) return status; // Bail
         
         // Update curPage info
@@ -465,16 +465,18 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
         curPageNo = newPageNo; // PageNo
         curDirtyFlag = false; // Haven't written yet
        
-        status = curPage->insertRecord(rec, rid); // Should work now
+        status = curPage->insertRecord(rec, outRid); // Should work now
         if (status != OK) return status; // But just in case
-        
-        curDirtyFlag = true; // New record in the page!
     
         // Update the FileHdrPage
-        headerPage->lastPage = newPageNo;
-        headerPage->pageCnt++;
-        headerPage->recCnt++;    	    
+        headerPage->lastPage = curPageNo;
+        headerPage->pageCnt++;   	    
     }
+    
+    // Do this stuff regardless of space
+    curDirtyFlag = true; // New record in the page!
+    headerPage->recCnt++;
+    curRec = outRid;
 
     return OK; // Success!
 }
