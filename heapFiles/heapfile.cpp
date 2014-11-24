@@ -277,6 +277,9 @@ const Status HeapFileScan::scanNext(RID& outRid)
 
 		// If we are at the end of the page
 		if (status == ENDOFPAGE) {
+			// We're at the end of the page, and there are no more pages
+			if (headerPage->lastPage == curPageNo) return FILEEOF;
+
 			// Unpin current page
 			status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
 			if (status != OK) return status;
@@ -293,14 +296,13 @@ const Status HeapFileScan::scanNext(RID& outRid)
 			if (status != OK) return FILEEOF;
 		}
 
+		curRec = tmpRid;
 		status = getRecord(rec);
 		if (status != OK) return status;
-
-		curRec = tmpRid;
 	} while(!matchRec(rec));
 
 	outRid = curRec;
-	return status;
+	return OK;
 }
 
 /*
