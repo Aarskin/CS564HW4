@@ -259,11 +259,51 @@ const Status HeapFileScan::resetScan()
 
 // Out: outRid
 const Status HeapFileScan::scanNext(RID& outRid)
-{
-    Status 	status = OK;
-    RID		tmpRid;
-    int 	nextPageNo;
-    Record      rec;
+{	
+	Status 	status = OK;
+	RID	tmpRid;
+	Record  rec;
+
+	do {
+		// If no record yet, grab first record
+		if ((curRec.pageNo == -1) && (curRec.slotNo == -1)) {
+			status = curPage->firstRecord(tmpRid);
+			if (status != OK) return FILEEOF;
+		} 
+		// Otherwise get next record
+		else {
+			status = curPage->nextRecord(curRec, tmpRid);
+		}
+
+		// If we are at the end of the page
+		if (status == ENDOFPAGE) {
+			// Unpin current page
+			status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
+			if (status != OK) return status;
+
+			// Getting the next page
+			curPage->getNextPage(curPageNo);
+
+			// Read page
+			status = bufMgr->readPage(filePtr, curPageNo, curPage);
+			if (status != OK) return status;
+
+			// Get first record
+			status = curPage->firstRecord(tmpRid);
+			if (status != OK) return FILEEOF;
+		}
+
+		status = getRecord(rec);
+		if (status != OK) return status;
+
+		curRec = tmpRid;
+	} while(!matchRec(rec));
+
+	outRid = curRec;
+	return status;
+}
+
+/*
     
     // There will always be curPage to loop over, this ensures do/while will
     // run at least once before terminating. (As I understand it)
@@ -318,7 +358,7 @@ const Status HeapFileScan::scanNext(RID& outRid)
     return FILEEOF; // Should never actually reach this point
     // The designed point to break out of this method is the check at the top of the first do/while loop
 }
-
+*/
 
 // returns pointer to the current record.  page is left pinned
 // and the scan logic is required to unpin the page 

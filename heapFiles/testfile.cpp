@@ -134,13 +134,13 @@ int main(int argc, char **argv)
 		{
 			// reconstruct record i
 			sprintf(rec1.s, "This is record %05d", i);
-    	    rec1.i = i;
-    	    rec1.f = i;
-    	    status = scan1->getRecord(dbrec2);
-    	    if (status != OK) break;
-			if (memcmp(&rec1, dbrec2.data, sizeof(RECORD)) != 0)
-			cout << "err0r reading record " << i << " back" << endl;
-    	    i++;
+		    	    rec1.i = i;
+		    	    rec1.f = i;
+		    	    status = scan1->getRecord(dbrec2);
+		    	    if (status != OK) break;
+					if (memcmp(&rec1, dbrec2.data, sizeof(RECORD)) != 0)
+					cout << "err0r reading record " << i << " back" << endl;
+		    	    i++;
 		}
 		if (status != FILEEOF) error.print(status);
 		cout << "scan file1 saw " << i << " records " << endl;
